@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jeequan.jeepay.service.mapper.OrderSnapshotMapper">
+
+    <resultMap id="BaseResultMap" type="com.jeequan.jeepay.core.entity.OrderSnapshot">
+        <id column="order_id" property="orderId" />
+        <id column="order_type" property="orderType" />
+        <result column="mch_resp_data" property="mchRespData" />
+        <result column="mch_resp_time" property="mchRespTime" />
+    </resultMap>
+
+    <select id="selectByOrder" resultMap="BaseResultMap">
+        SELECT order_id, order_type, mch_resp_data, mch_resp_time
+        FROM t_order_snapshot
+        WHERE order_id = #{orderId}
+          AND order_type = #{orderType}
+    </select>
+
+    <insert id="upsertMchResponse">
+        INSERT INTO t_order_snapshot(order_id, order_type, mch_resp_data, mch_resp_time)
+        VALUES(#{orderId}, #{orderType}, #{mchRespData}, #{mchRespTime})
+        ON DUPLICATE KEY UPDATE
+            mch_resp_data = VALUES(mch_resp_data),
+            mch_resp_time = VALUES(mch_resp_time)
+    </insert>
+
+</mapper>

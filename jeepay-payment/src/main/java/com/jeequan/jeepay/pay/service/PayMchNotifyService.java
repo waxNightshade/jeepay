@@ -24,14 +24,18 @@ import com.jeequan.jeepay.core.entity.RefundOrder;
 import com.jeequan.jeepay.core.entity.TransferOrder;
 import com.jeequan.jeepay.core.utils.JeepayKit;
 import com.jeequan.jeepay.core.utils.StringKit;
+import com.jeequan.jeepay.pay.compat.epay.service.EpayCallbackService;
 import com.jeequan.jeepay.pay.rqrs.payorder.QueryPayOrderRS;
 import com.jeequan.jeepay.pay.rqrs.refund.QueryRefundOrderRS;
 import com.jeequan.jeepay.pay.rqrs.transfer.QueryTransferOrderRS;
 import com.jeequan.jeepay.service.impl.MchNotifyRecordService;
+import com.jeequan.jeepay.service.impl.PayOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 /*
 * 商户通知 service
@@ -47,6 +51,8 @@ public class PayMchNotifyService {
     @Autowired private MchNotifyRecordService mchNotifyRecordService;
     @Autowired private ConfigContextQueryService configContextQueryService;
     @Autowired private IMQSender mqSender;
+    @Autowired private EpayCallbackService epayCallbackService;
+    @Autowired private PayOrderService payOrderService;
 
 
     /** 商户通知信息， 只有订单是终态，才会发送通知， 如明确成功和明确失败 **/
@@ -55,6 +61,15 @@ public class PayMchNotifyService {
         try {
             // 通知地址为空
             if(StringUtils.isEmpty(dbPayOrder.getNotifyUrl())){
+                return ;
+            }
+
+            EpayCallbackService.OrderClassification classification = epayCallbackService.classify(dbPayOrder);
+            if(classification == EpayCallbackService.OrderClassification.CORRUPTED_EPAY){
+                return ;
+            }
+            if(classification == EpayCallbackService.OrderClassification.EPAY
+                    && !Byte.valueOf(PayOrder.STATE_SUCCESS).equals(dbPayOrder.getState())){
                 return ;
             }
 
@@ -208,6 +223,10 @@ public class PayMchNotifyService {
      */
     public String createNotifyUrl(PayOrder payOrder, String appSecret) {
 
+        if(epayCallbackService.classify(payOrder) != EpayCallbackService.OrderClassification.ORDINARY){
+            return epayCallbackService.createNotifyUrl(payOrder, appSecret);
+        }
+
         QueryPayOrderRS queryPayOrderRS = QueryPayOrderRS.buildByPayOrder(payOrder);
         JSONObject jsonObject = (JSONObject)JSONObject.toJSON(queryPayOrderRS);
         jsonObject.put("reqTime", System.currentTimeMillis()); //添加请求时间
@@ -258,6 +277,21 @@ public class PayMchNotifyService {
      * 创建响应URL
      */
     public String createReturnUrl(PayOrder payOrder, String appSecret) {
+
+        EpayCallbackService.OrderClassification classification = epayCallbackService.classify(payOrder);
+        if(classification == EpayCallbackService.OrderClassification.CORRUPTED_EPAY){
+            throw new IllegalArgumentException("Invalid EPay return order");
+        }
+        if(classification == EpayCallbackService.OrderClassification.EPAY){
+            PayOrder persistedOrder = payOrderService.getById(payOrder.getPayOrderId());
+            if(persistedOrder == null
+                    || !Objects.equals(payOrder.getPayOrderId(), persistedOrder.getPayOrderId())
+                    || epayCallbackService.classify(persistedOrder)
+                        != EpayCallbackService.OrderClassification.EPAY){
+                throw new IllegalArgumentException("Invalid EPay return order");
+            }
+            return epayCallbackService.createReturnUrl(persistedOrder, appSecret);
+        }
 
         if(StringUtils.isEmpty(payOrder.getReturnUrl())){
             return "";

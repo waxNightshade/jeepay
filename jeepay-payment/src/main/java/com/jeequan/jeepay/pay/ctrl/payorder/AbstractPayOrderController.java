@@ -76,6 +76,9 @@ public abstract class AbstractPayOrderController extends ApiController {
         return unifiedOrder(wayCode, bizRQ, null);
     }
 
+    protected void afterPayOrderPersisted(PayOrder payOrder) {
+    }
+
     /** 统一下单 **/
     protected ApiRes unifiedOrder(String wayCode, UnifiedOrderRQ bizRQ, PayOrder payOrder){
 
@@ -199,6 +202,7 @@ public abstract class AbstractPayOrderController extends ApiController {
                 }
                 //订单入库 订单状态： 生成状态  此时没有和任何上游渠道产生交互。
                 payOrderService.save(payOrder);
+                afterPayOrderPersisted(payOrder);
             }
 
             //调起上游支付接口
