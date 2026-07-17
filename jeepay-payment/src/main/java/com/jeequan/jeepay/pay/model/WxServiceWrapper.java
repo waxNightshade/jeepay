@@ -23,6 +23,7 @@ import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.model.params.wxpay.WxpayIsvParams;
 import com.jeequan.jeepay.core.model.params.wxpay.WxpayNormalMchParams;
 import com.jeequan.jeepay.core.utils.SpringBeansUtil;
+import com.jeequan.jeepay.pay.channel.wxpay.kits.WxpayV3VerifierFactory;
 import com.jeequan.jeepay.pay.util.ChannelCertConfigKitBean;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -88,6 +89,10 @@ public class WxServiceWrapper {
         }
         if(StringUtils.isNotEmpty(wxpayPublicKeyId)){
             wxPayConfig.setPublicKeyId(wxpayPublicKeyId);  // 微信公钥ID
+        }
+
+        if (CS.PAY_IF_VERSION.WX_V3.equals(apiVersion)) {
+            new WxpayV3VerifierFactory().install(wxPayConfig);
         }
 
         WxPayService wxPayService = new WxPayServiceImpl();

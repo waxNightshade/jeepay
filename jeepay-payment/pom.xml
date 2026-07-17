@@ -95,6 +95,18 @@
             <artifactId>weixin-java-mp</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>${httpclient5.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents.core5</groupId>
+            <artifactId>httpcore5</artifactId>
+            <version>${httpcore5.version}</version>
+        </dependency>
+
         <!-- 生成二维码工具包 zxing -->
         <dependency>
             <groupId>com.google.zxing</groupId>
