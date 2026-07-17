@@ -185,6 +185,7 @@ services:
     volumes:
       - ./logs/payment:/jeepayhomes/service/logs
       - ./conf/payment/application.yml:/jeepayhomes/service/app/application.yml
+      - jeepay_uploads:/jeepayhomes/service/uploads
     networks:
       jeepay:
         ipv4_address: 172.20.0.21
@@ -215,6 +216,7 @@ services:
     volumes:
       - ./logs/manager:/jeepayhomes/service/logs
       - ./conf/manager/application.yml:/jeepayhomes/service/app/application.yml
+      - jeepay_uploads:/jeepayhomes/service/uploads
     networks:
       jeepay:
         ipv4_address: 172.20.0.22
@@ -245,6 +247,7 @@ services:
     volumes:
       - ./logs/merchant:/jeepayhomes/service/logs
       - ./conf/merchant/application.yml:/jeepayhomes/service/app/application.yml
+      - jeepay_uploads:/jeepayhomes/service/uploads
     networks:
       jeepay:
         ipv4_address: 172.20.0.23
@@ -340,6 +343,7 @@ networks:
 volumes:
   mysql:
   redis:
+  jeepay_uploads:
   rocketmq_namesrv_logs:
   rocketmq_broker_logs:
   rocketmq_broker_store:
